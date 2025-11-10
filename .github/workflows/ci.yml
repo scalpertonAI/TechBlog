@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Build Contentlayer
+        run: npx contentlayer build
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          # Dummy env vars for build (replace with actual secrets in production)
+          SITE_URL: http://localhost:3000
+          NEXT_PUBLIC_PLAUSIBLE_DOMAIN: example.com
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          BEEHIIV_API_KEY: ${{ secrets.BEEHIIV_API_KEY }}
+          BEEHIIV_PUBLICATION_ID: ${{ secrets.BEEHIIV_PUBLICATION_ID }}
+          MEILI_HOST: http://localhost:7700
+          MEILI_MASTER_KEY: test
+          REINDEX_SECRET: ${{ secrets.REINDEX_SECRET }}
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+
+  deploy-preview:
+    name: Deploy Preview (Vercel)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}

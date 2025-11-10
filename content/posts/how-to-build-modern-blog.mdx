@@ -1,0 +1,299 @@
+---
+title: 'How to Build a Modern Blog with Next.js and MDX'
+description: 'A comprehensive guide to building a production-ready blog using Next.js, TypeScript, MDX, and Contentlayer.'
+date: '2024-01-20'
+published: true
+featured: false
+tags: ['Next.js', 'TypeScript', 'MDX', 'Tutorial', 'Web Development']
+authors: ['Admin']
+heroImage: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=630&fit=crop'
+---
+
+Building a blog in 2024 is very different from what it was a decade ago. Modern blogs need to be fast, SEO-friendly, and provide an excellent developer experience. In this guide, we'll walk through building a production-ready blog.
+
+## Why Next.js for Blogging?
+
+Next.js has become the go-to framework for content-heavy websites, and for good reason:
+
+- **Static Site Generation (SSG)**: Pre-render pages at build time for optimal performance
+- **Incremental Static Regeneration (ISR)**: Update content without rebuilding the entire site
+- **Image Optimization**: Automatic image optimization with `next/image`
+- **SEO-Friendly**: Built-in support for metadata and Open Graph tags
+- **TypeScript Support**: First-class TypeScript support out of the box
+
+## The Tech Stack
+
+Let's break down the technologies we're using:
+
+### Core Framework
+
+```json
+{
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+```
+
+### Content Management
+
+We're using **Contentlayer** to transform MDX files into type-safe JSON data:
+
+```typescript
+// contentlayer.config.ts
+import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
+
+export const Post = defineDocumentType(() => ({
+  name: 'Post',
+  filePathPattern: `posts/**/*.mdx`,
+  contentType: 'mdx',
+  fields: {
+    title: { type: 'string', required: true },
+    description: { type: 'string', required: true },
+    date: { type: 'date', required: true },
+    tags: { type: 'list', of: { type: 'string' } },
+    published: { type: 'boolean', default: true },
+  },
+}));
+```
+
+This configuration gives us:
+
+- ✅ Type-safe access to all posts
+- ✅ Automatic validation
+- ✅ IntelliSense in your IDE
+- ✅ Compile-time errors if content is malformed
+
+### Styling
+
+**Tailwind CSS v4** provides utility-first styling with excellent DX:
+
+```tsx
+// Example: Styled component
+export default function PostCard({ title, description }: Props) {
+  return (
+    <article className="rounded-lg border border-border bg-card p-6 transition-shadow hover:shadow-lg">
+      <h2 className="mb-2 text-xl font-bold">{title}</h2>
+      <p className="text-muted-foreground">{description}</p>
+    </article>
+  );
+}
+```
+
+## Building Key Features
+
+### 1. Post Listing with Pagination
+
+Here's how we implement paginated post listings:
+
+```typescript
+import { allPosts } from 'contentlayer/generated';
+import { paginate, sortPostsByDate } from '@/lib/utils';
+
+export default function BlogPage({ searchParams }: Props) {
+  const currentPage = Number(searchParams.page) || 1;
+  const posts = sortPostsByDate(allPosts.filter((post) => post.published));
+
+  const { items, totalPages } = paginate(posts, currentPage, 12);
+
+  return (
+    <div>
+      {items.map((post) => (
+        <PostCard key={post._id} {...post} />
+      ))}
+      <Pagination currentPage={currentPage} totalPages={totalPages} />
+    </div>
+  );
+}
+```
+
+### 2. Dynamic Post Pages
+
+Individual post pages use Next.js dynamic routes:
+
+```typescript
+// app/blog/[slug]/page.tsx
+import { allPosts } from 'contentlayer/generated';
+import { useMDXComponent } from 'next-contentlayer2/hooks';
+
+export async function generateStaticParams() {
+  return allPosts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
+export default function PostPage({ params }: Props) {
+  const post = allPosts.find((p) => p.slug === params.slug);
+  const MDXContent = useMDXComponent(post.body.code);
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <MDXContent components={MDXComponents} />
+    </article>
+  );
+}
+```
+
+### 3. SEO Optimization
+
+Metadata API in Next.js 15 makes SEO simple:
+
+```typescript
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post = allPosts.find((p) => p.slug === params.slug);
+
+  return {
+    title: post.title,
+    description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      type: 'article',
+      publishedTime: post.date,
+      images: [post.heroImage],
+    },
+  };
+}
+```
+
+## Advanced Features
+
+### Search Integration
+
+We use **Meilisearch** for instant search:
+
+<Callout type="info">
+Meilisearch provides sub-50ms search responses with typo tolerance and filtering.
+</Callout>
+
+```typescript
+// Indexing posts
+const indexedPosts = allPosts.map((post) => ({
+  id: post._id,
+  title: post.title,
+  description: post.description,
+  content: post.body.raw,
+  tags: post.tags,
+  url: post.url,
+}));
+
+await meiliClient.index('posts').addDocuments(indexedPosts);
+```
+
+### Newsletter Integration
+
+Beehiiv integration for email subscriptions:
+
+```typescript
+// API route: /api/subscribe
+export async function POST(request: Request) {
+  const { email } = await request.json();
+
+  const result = await fetch('https://api.beehiiv.com/v2/publications/{id}/subscriptions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  return Response.json({ success: true });
+}
+```
+
+### Analytics
+
+Privacy-friendly analytics with **Plausible**:
+
+```tsx
+// app/layout.tsx
+<Script
+  defer
+  data-domain="yourdomain.com"
+  src="https://plausible.io/js/script.js"
+/>
+```
+
+## Performance Optimization
+
+### Image Optimization
+
+Always use `next/image` for automatic optimization:
+
+```tsx
+<Image
+  src={post.heroImage}
+  alt={post.title}
+  width={1200}
+  height={630}
+  className="rounded-lg"
+  priority={featured}
+/>
+```
+
+### ISR Configuration
+
+Enable Incremental Static Regeneration:
+
+```typescript
+// Revalidate every 60 seconds
+export const revalidate = 60;
+```
+
+## Deployment
+
+Deploy to Vercel with zero configuration:
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+Set environment variables in the Vercel dashboard:
+
+- `BEEHIIV_API_KEY`
+- `MEILI_HOST`
+- `MEILI_MASTER_KEY`
+- `PLAUSIBLE_DOMAIN`
+- `SENTRY_DSN`
+
+## Best Practices
+
+1. **Type Safety**: Use TypeScript everywhere
+2. **Performance**: Optimize images and enable ISR
+3. **SEO**: Implement proper metadata and JSON-LD
+4. **Accessibility**: Use semantic HTML and ARIA labels
+5. **Security**: Validate inputs and protect API routes
+
+<Callout type="success">
+Following these practices ensures your blog is fast, secure, and maintainable.
+</Callout>
+
+## Conclusion
+
+Building a modern blog requires careful consideration of performance, SEO, and developer experience. With Next.js, MDX, and the right tools, you can create a blog that's:
+
+- ⚡ Blazing fast
+- 🎨 Beautiful and responsive
+- 🔍 SEO optimized
+- 🛠️ Easy to maintain
+
+The complete source code for this blog is available on GitHub. Feel free to use it as a starting point for your own projects!
+
+## What's Next?
+
+In the next post, we'll cover:
+
+- Advanced MDX components
+- Custom syntax highlighting
+- Comment systems
+- Related posts algorithms
+
+Stay tuned!

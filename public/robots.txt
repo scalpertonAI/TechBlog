@@ -1,0 +1,10 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin/test pages (if any)
+Disallow: /api/
+Disallow: /test-error
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml

@@ -1,0 +1,107 @@
+---
+title: 'Hello World: Welcome to TechBlog'
+description: 'An introduction to our new blog platform built with Next.js, TypeScript, and modern web technologies.'
+date: '2024-01-15'
+published: true
+featured: true
+tags: ['Next.js', 'TypeScript', 'Blog', 'Introduction']
+authors: ['Admin']
+heroImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=630&fit=crop'
+---
+
+Welcome to **TechBlog**, a modern, production-ready blogging platform built with the latest web technologies! This is our inaugural post, and we're excited to share what makes this platform special.
+
+## What is TechBlog?
+
+TechBlog is a fully-featured, open-source blogging platform designed for developers and tech enthusiasts. It combines the power of modern frameworks with best practices in web development.
+
+<Callout type="info">
+This blog is built with **Next.js 15**, **TypeScript**, **Tailwind CSS v4**, and **MDX** for content authoring.
+</Callout>
+
+## Key Features
+
+Here's what makes this platform stand out:
+
+### 1. Modern Tech Stack
+
+- **Next.js 15** with App Router for optimal performance
+- **TypeScript** for type safety and better developer experience
+- **Tailwind CSS v4** for utility-first styling
+- **MDX** for rich, component-driven content
+- **Contentlayer** for type-safe content management
+
+### 2. Content Management
+
+```typescript
+// Example: Type-safe content access with Contentlayer
+import { allPosts } from 'contentlayer/generated';
+
+const publishedPosts = allPosts.filter((post) => post.published);
+```
+
+All content is managed through MDX files with full TypeScript support. This means you get autocomplete, type checking, and IntelliSense for your content!
+
+### 3. Search Functionality
+
+Powered by **Meilisearch**, our search is:
+
+- ⚡ Lightning fast
+- 🎯 Highly relevant
+- 🔍 Typo-tolerant
+- 📱 Works offline with fallback
+
+### 4. Newsletter Integration
+
+We've integrated with **Beehiiv** for newsletter subscriptions:
+
+- Double opt-in support
+- Automated welcome emails
+- Privacy-focused
+- Easy to manage
+
+### 5. Analytics & Monitoring
+
+- **Plausible Analytics** for privacy-friendly traffic insights
+- **Sentry** for error monitoring and performance tracking
+- No cookies, GDPR compliant
+
+## Why We Built This
+
+The web development ecosystem moves fast, and we wanted a blogging platform that:
+
+1. Uses the latest stable technologies
+2. Provides an excellent developer experience
+3. Is production-ready out of the box
+4. Can be easily customized and extended
+
+<Callout type="success">
+All the code is **open source** and available for you to use, modify, and learn from!
+</Callout>
+
+## What's Next?
+
+In upcoming posts, we'll dive deep into:
+
+- How to customize this blog for your needs
+- Performance optimization techniques
+- SEO best practices with Next.js
+- Deploying to Vercel and other platforms
+- Integrating additional features
+
+## Get Involved
+
+We'd love to hear from you! Here's how you can get involved:
+
+- **Subscribe** to our newsletter (form below)
+- **Follow** us on social media
+- **Contribute** to the project on GitHub
+- **Share** your feedback and suggestions
+
+---
+
+Thank you for being here from the beginning. We're excited to share this journey with you!
+
+<Callout type="warning">
+Don't forget to subscribe to our newsletter to get notified when we publish new content!
+</Callout>
